@@ -1,2 +1,2 @@
 # FSCalc
-F# learn: siple calculator
+F# learn: simple calculator

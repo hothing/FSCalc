@@ -1,31 +1,58 @@
 module Library
 
-//open List
+type SimpleExpression =
+    | Number of int
+    | ValueOf of string
+    | Add of SimpleExpression * SimpleExpression
+    | Sub of SimpleExpression * SimpleExpression
+    | Multiply of SimpleExpression * SimpleExpression
+    | Divide of SimpleExpression * SimpleExpression
+    | Neg of SimpleExpression
+    | ExIf of SimpleExpression * SimpleExpression * SimpleExpression
 
 type Expression =
-    | Number of int
-    | GetVar of string
-    | SetVar of string * Expression 
-    | Add of Expression * Expression
-    | Sub of Expression * Expression
-    | Multiply of Expression * Expression
-    | Divide of Expression * Expression
-    | Neg of Expression
-    | If of Expression * Expression * Expression
+    | Expr of SimpleExpression
+    | Set of string * SimpleExpression
     | Seq of Expression list
 
-let rec Evaluate (env:Map<string,int>) exp =
+type Enviroment = Map<string,int>
+
+// evalSimple : Enviroment -> SimpleExpression -> Int
+let rec evalSimple (env : Enviroment)  (exp : SimpleExpression) =
     match exp with
     | Number n -> n
-    | GetVar id -> env.[id]
-    | SetVar (id, value) -> let res = Evaluate env value
-                            let nenv = env.Add(id, res) //BUG: it does not work
-                            res
-    | Add (x, y) -> Evaluate env x + Evaluate env y
-    | Sub (x, y) -> Evaluate env x - Evaluate env y
-    | Multiply (x, y) -> Evaluate env x * Evaluate env y
-    | Divide (x, y) -> Evaluate env x / Evaluate env y
-    | Neg (x) -> - Evaluate env x
-    | If (cond, eTrue, eFalse) -> if (Evaluate env cond) = 0 then (Evaluate env eFalse) else (Evaluate env eTrue)
-    | Seq list -> List.fold (fun a x -> Evaluate env x) 0 list 
-    
+    | ValueOf id -> env.[id]
+    | Add (x, y) -> evalSimple env x + evalSimple env y
+    | Sub (x, y) -> evalSimple env x - evalSimple env y
+    | Multiply (x, y) -> evalSimple env x * evalSimple env y
+    | Divide (x, y) -> evalSimple env x / evalSimple env y
+    | Neg (x) -> - evalSimple env x
+    | ExIf (cond, eTrue, eFalse) -> if (evalSimple env cond) = 0 then (evalSimple env eFalse) else (evalSimple env eTrue)
+
+
+// evaluate : (Enviroment, Expression) -> (Enviroment, Expression)
+let rec evaluate ((env, exp) : Enviroment * Expression) =
+    match exp with
+    | Expr ex -> let r = evalSimple env ex
+                 (env, Expr(Number(r)))
+    | Set (id, ex) -> let value = evalSimple env ex
+                      (env.Add(id, value), Expr(Number(value)))                          
+    | Seq elist -> match elist with
+                   | head :: tail -> let (nv, ex) = evaluate (env, head)
+                                     if tail.IsEmpty then 
+                                         evaluate (nv, Seq(tail))
+                                     else
+                                         (nv, ex)
+                   | [] -> (env, exp)
+
+let getResult exp =
+    match exp with
+    | Expr ex -> match ex with
+                 | Number value -> value
+                 | _ -> invalidArg "exp" "is not a Number"
+    | _ -> invalidArg "exp" "is not 'Expr'"
+
+//let getResult exp =
+//    match exp with
+//    | Number value -> value
+//    | _ -> 0

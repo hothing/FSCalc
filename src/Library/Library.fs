@@ -39,7 +39,7 @@ let rec evaluate ((env, exp) : Enviroment * Expression) =
                       (env.Add(id, value), Expr(Number(value)))                          
     | Seq elist -> match elist with
                    | head :: tail -> let (nv, ex) = evaluate (env, head)
-                                     if tail.IsEmpty then 
+                                     if not tail.IsEmpty then 
                                          evaluate (nv, Seq(tail))
                                      else
                                          (nv, ex)

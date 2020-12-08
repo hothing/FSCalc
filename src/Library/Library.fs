@@ -21,7 +21,10 @@ type Enviroment = Map<string,int>
 let rec evalSimple (env : Enviroment)  (exp : SimpleExpression) =
     match exp with
     | Number n -> n
-    | ValueOf id -> env.[id]
+    | ValueOf id -> if env.ContainsKey(id) then
+                        env.[id]
+                    else
+                        failwith (sprintf "Variable %s is not defined" id)
     | Add (x, y) -> evalSimple env x + evalSimple env y
     | Sub (x, y) -> evalSimple env x - evalSimple env y
     | Multiply (x, y) -> evalSimple env x * evalSimple env y
@@ -45,14 +48,14 @@ let rec evaluate ((env, exp) : Enviroment * Expression) =
                                          (nv, ex)
                    | [] -> (env, exp)
 
+
+let getNumber exp =
+    match exp with
+    | Number value -> value
+    | _ -> invalidArg "exp" "is not a Number"
+
 let getResult exp =
     match exp with
-    | Expr ex -> match ex with
-                 | Number value -> value
-                 | _ -> invalidArg "exp" "is not a Number"
+    | Expr ex -> getNumber ex 
     | _ -> invalidArg "exp" "is not 'Expr'"
 
-//let getResult exp =
-//    match exp with
-//    | Number value -> value
-//    | _ -> 0

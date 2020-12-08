@@ -23,6 +23,24 @@ let main argv =
     let expr3 = Seq([expr1; expr2; Set("c", Multiply(ValueOf("b"), Number(2)))])
     let (env, exp) = evaluate (environment, expr3)
     printfn "Result #3: %d" (getResult exp)
-    
+
+    // Test the errors
+    try
+        let expr4 = Seq([expr1; expr2; Set("c", Multiply(ValueOf("x"), Number(2)))])
+        let (env, exp) = evaluate (environment, expr4)
+        printfn "Result @E#1: %d" (getResult exp)
+    with
+    | ex -> printfn "Error: %s" (ex.ToString())
+
+    try
+        printfn "Result @E#2.a: %d" (getResult expr1)
+    with
+    | ex -> printfn "Error: %s" (ex.ToString())
+
+    try
+        printfn "Result @E#2.b: %d" (getResult expr2)
+    with
+    | ex -> printfn "Error: %s" (ex.ToString())
+        
     0 // return an integer exit code
 

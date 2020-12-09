@@ -1,5 +1,9 @@
 module Library
 
+type Value =
+    | Int of int
+    | Bool of bool
+
 type SimpleExpression =
     | Number of int
     | ValueOf of string
@@ -8,12 +12,12 @@ type SimpleExpression =
     | Multiply of SimpleExpression * SimpleExpression
     | Divide of SimpleExpression * SimpleExpression
     | Neg of SimpleExpression
-    | ExIf of SimpleExpression * SimpleExpression * SimpleExpression
+    | CondCalc of SimpleExpression * SimpleExpression * SimpleExpression
 
 type Expression =
     | Expr of SimpleExpression
     | Set of string * SimpleExpression
-    | Seq of Expression list
+    | Prog of Expression list
 
 type Enviroment = Map<string,int>
 
@@ -30,7 +34,7 @@ let rec evalSimple (env : Enviroment)  (exp : SimpleExpression) =
     | Multiply (x, y) -> evalSimple env x * evalSimple env y
     | Divide (x, y) -> evalSimple env x / evalSimple env y
     | Neg (x) -> - evalSimple env x
-    | ExIf (cond, eTrue, eFalse) -> if (evalSimple env cond) = 0 then (evalSimple env eFalse) else (evalSimple env eTrue)
+    | CondCalc (cond, eTrue, eFalse) -> if (evalSimple env cond) = 0 then (evalSimple env eFalse) else (evalSimple env eTrue)
 
 
 // evaluate : (Enviroment, Expression) -> (Enviroment, Expression)
@@ -39,11 +43,11 @@ let rec evaluate ((env, exp) : Enviroment * Expression) =
     | Expr ex -> let r = evalSimple env ex
                  (env, Expr(Number(r)))
     | Set (id, ex) -> let value = evalSimple env ex
-                      (env.Add(id, value), Expr(Number(value)))                          
-    | Seq elist -> match elist with
+                      (env.Add(id, value), Expr(Number(value)))
+    | Prog elist -> match elist with
                    | head :: tail -> let (nv, ex) = evaluate (env, head)
-                                     if not tail.IsEmpty then 
-                                         evaluate (nv, Seq(tail))
+                                     if not tail.IsEmpty then
+                                         evaluate (nv, Prog(tail))
                                      else
                                          (nv, ex)
                    | [] -> (env, exp)
@@ -56,6 +60,5 @@ let getNumber exp =
 
 let getResult exp =
     match exp with
-    | Expr ex -> getNumber ex 
+    | Expr ex -> getNumber ex
     | _ -> invalidArg "exp" "is not 'Expr'"
-
